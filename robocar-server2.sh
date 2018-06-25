@@ -5,7 +5,7 @@ ENVDIR=${HOME}/env
 
 ACTIVATE_SCRIPT=${ENVDIR}/bin/activate
 
-WORK_DIR=${HOME}/Servo-FS90R/robocar2
+WORK_DIR=${HOME}/RobotCar01
 CMD=${WORK_DIR}/robocar-server2.py
 
 if [ ! -f ${ACTIVATE_SCRIPT} ]; then
@@ -13,7 +13,7 @@ if [ ! -f ${ACTIVATE_SCRIPT} ]; then
     exit 1
 fi
 
-. ${ENVDIR}/bin/activate
+. ${ACTIVATE_SCRIPT}
 
 cd ${WORK_DIR}
 exec ${CMD} $*

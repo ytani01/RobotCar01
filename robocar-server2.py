@@ -151,7 +151,7 @@ def conf_save():
         f.write(' '.join(map(str, Pulse_Right))+'\n')
 
 # Auto Mode
-def auto_mode():
+def auto_mode(sec):
     global Cur_Pulse
     global Tof
     global Tof_Timing
@@ -163,10 +163,18 @@ def auto_mode():
     sleep_unit = 0.5
     SLEEP_COUNT_MAX = 7
 
+    time_start = time.time()
+
     sleep_count = 1
     while True:
+        time_cur = time.time()
         distance = Tof.get_distance()
-        print("distance = %d cm" % (distance/10))
+        print("%f.2" % (time_cur - time_start), "distance = %d cm" % (distance/10))
+
+        if sec != 0:
+            if (time_cur - time_start) > sec:
+                set_stop()
+                break
 
         if distance > DISTANCE_NEAR:
             stat_move = 'forward'
@@ -280,7 +288,10 @@ def robocar():
         InChar = ''
 
         if ch == '@':
-            auto_mode()
+            auto_mode(0)
+
+        if ch == '#':
+            auto_mode(STEP_MOVE_SEC)
 
         if ch == 'w':
             stat_move = 'foward'

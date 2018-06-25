@@ -35,6 +35,8 @@ import subprocess
 #import RPi.GPIO as GPIO
 from time import sleep
 from pixels import pixels
+import pigpio
+PiGpio = None
 
 ROBOT_HOST = 'localhost'
 ROBOT_PORT = 12340
@@ -98,6 +100,7 @@ def setContinueFlag(speech_str):
     for w in endword:
         if w[0] in speech_str:
             print(w[0], ' ', end='')
+            robot_cmd('s')
             continue_flag = False
             timeout_count = 0
             if not w[1]:
@@ -122,7 +125,8 @@ def turnEnd():
     proc = subprocess.call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     proc = subprocess.call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
-def procButton(pin):
+#def procButton(pin):
+def procButton(pin, level, tick):
     global assistant
     global continue_flag
     global timeout_count
@@ -131,6 +135,7 @@ def procButton(pin):
             continue_flag = True
             timeout_count = 0
             assistant.start_conversation()
+            robot_cmd('s')
     print()
 
 def play_ack(num):
@@ -206,6 +211,9 @@ def process_event(event, device_id):
             #GPIO.output(PIN_LAMP, GPIO.LOW)
             sleep(0.5)
             #GPIO.output(PIN_LAMP, GPIO.HIGH)
+        if '動いて' in speech_str:
+            assistant.stop_conversation()
+            robot_cmd('#')
         if '回転' in speech_str:
             if '右' in speech_str:
                 assistant.stop_conversation()
@@ -215,7 +223,7 @@ def process_event(event, device_id):
                 robot_cmd('A')
         if '前進' in speech_str:
             assistant.stop_conversation()
-            robot_cmd('A')
+            robot_cmd('W')
         if 'バック' in speech_str:
             assistant.stop_conversation()
             robot_cmd('X')
@@ -230,11 +238,15 @@ def process_event(event, device_id):
             continue_flag = False
         turnEnd()
 
+    if event.type == EventType.ON_RESPONDING_STARTED:
+        robot_cmd('@')
+
     if event.type == EventType.ON_NO_RESPONSE:
         turnEnd()
 
     if (event.type == EventType.ON_CONVERSATION_TURN_FINISHED and
             event.args and not event.args['with_follow_on_turn']):
+        robot_cmd('s')
         turnEnd()
 
     if event.type == EventType.ON_DEVICE_ACTION:
@@ -277,6 +289,14 @@ def main():
     global assistant
 
     pixels.wakeup()
+
+    PiGpio = pigpio.pi()
+    for p in PIN_BUTTON:
+        PiGpio.set_mode(p, pigpio.INPUT)
+        if p == 13: # toggle button
+            cb = PiGpio.callback(p, pigpio.EITHER_EDGE, procButton)
+        else:
+            cb = PiGpio.callback(p, pigpio.FALLING_EDGE, procButton)
 
 #    GPIO.setmode(GPIO.BCM)
 #    GPIO.setup(PIN_LAMP, GPIO.OUT)
@@ -339,5 +359,6 @@ if __name__ == '__main__':
     main()
   finally:
     pixels.off()
+    PiGpio.stop()
 #    print('GPIO.cleanup()')
 #    GPIO.cleanup()
