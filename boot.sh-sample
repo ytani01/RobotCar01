@@ -19,10 +19,10 @@ done
 #	fi
 #fi
 
-CMD="${BINDIR}/FabLabKannai-GoogleAssistant.sh"
-if [ -x ${CMD} ]; then
-	${CMD} &
-fi
+#CMD="${BINDIR}/FabLabKannai-GoogleAssistant.sh"
+#if [ -x ${CMD} ]; then
+#	${CMD} &
+#fi
 
 echo -n '========== '
 date
@@ -63,4 +63,14 @@ if [ "X`pgrep loop-snapshot`" = "X" ]; then
 	#echo_and_bg ${CMD} 20 1000
 	echo_and_bg ${CMD} 5 2000
     fi
+fi
+
+CMD=${BINDIR}/robocar-server2.sh
+if [ -x ${CMD} ]; then
+	echo_and_bg ${CMD}
+fi
+
+CMD=${BINDIR}/RobotCar-GoogleAssistant.sh
+if [ -x ${CMD} ]; then
+	echo_and_bg ${CMD}
 fi

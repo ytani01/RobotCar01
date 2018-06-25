@@ -217,6 +217,8 @@ def auto_mode(sec):
 
         if InChar != '':
 #            InChar = ''
+            if InChar in '@#?':
+                InChar = 's'
             break
 
         time.sleep(Tof_Timing/1000000.00)
@@ -292,6 +294,9 @@ def robocar():
 
         if ch == '#':
             auto_mode(STEP_MOVE_SEC)
+
+        if ch == '?':
+            auto_mode(AUTO_MOVE_SEC)
 
         if ch == 'w':
             stat_move = 'foward'

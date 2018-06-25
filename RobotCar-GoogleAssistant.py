@@ -50,7 +50,8 @@ SOUND_ACK = [
 proc = None
 
 PIN_LAMP = 12
-PIN_BUTTON = [13, 17]
+#PIN_BUTTON = [13, 17]
+PIN_BUTTON = [17]
 BOUNCE_MSEC = 500
 
 endword = [
@@ -131,11 +132,13 @@ def procButton(pin, level, tick):
     global continue_flag
     global timeout_count
 
+    print('procButton():', pin, level, tick)
+
     if pin in PIN_BUTTON:
-            continue_flag = True
-            timeout_count = 0
-            assistant.start_conversation()
-            robot_cmd('s')
+            #continue_flag = True
+            #timeout_count = 0
+            #assistant.start_conversation()
+            robot_cmd('@')
     print()
 
 def play_ack(num):
@@ -211,9 +214,9 @@ def process_event(event, device_id):
             #GPIO.output(PIN_LAMP, GPIO.LOW)
             sleep(0.5)
             #GPIO.output(PIN_LAMP, GPIO.HIGH)
-        if '動いて' in speech_str:
+        if 'start' in speech_str or 'スタート' in speech_str:
             assistant.stop_conversation()
-            robot_cmd('#')
+            robot_cmd('?')
         if '回転' in speech_str:
             if '右' in speech_str:
                 assistant.stop_conversation()
@@ -239,14 +242,13 @@ def process_event(event, device_id):
         turnEnd()
 
     if event.type == EventType.ON_RESPONDING_STARTED:
-        robot_cmd('@')
+        pass
 
     if event.type == EventType.ON_NO_RESPONSE:
         turnEnd()
 
     if (event.type == EventType.ON_CONVERSATION_TURN_FINISHED and
             event.args and not event.args['with_follow_on_turn']):
-        robot_cmd('s')
         turnEnd()
 
     if event.type == EventType.ON_DEVICE_ACTION:
@@ -289,14 +291,6 @@ def main():
     global assistant
 
     pixels.wakeup()
-
-    PiGpio = pigpio.pi()
-    for p in PIN_BUTTON:
-        PiGpio.set_mode(p, pigpio.INPUT)
-        if p == 13: # toggle button
-            cb = PiGpio.callback(p, pigpio.EITHER_EDGE, procButton)
-        else:
-            cb = PiGpio.callback(p, pigpio.FALLING_EDGE, procButton)
 
 #    GPIO.setmode(GPIO.BCM)
 #    GPIO.setup(PIN_LAMP, GPIO.OUT)
@@ -341,6 +335,15 @@ def main():
                                                             **json.load(f))
 
     with Assistant(credentials, args.device_model_id) as assistant:
+
+        PiGpio = pigpio.pi()
+        for p in PIN_BUTTON:
+            PiGpio.set_mode(p, pigpio.INPUT)
+            if p == 13: # toggle button
+                cb = PiGpio.callback(p, pigpio.EITHER_EDGE, procButton)
+            else:
+                cb = PiGpio.callback(p, pigpio.FALLING_EDGE, procButton)
+
         events = assistant.start()
 
         print('device_model_id:', args.device_model_id + '\n' +
