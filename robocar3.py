@@ -23,7 +23,8 @@ PULSE_OFF = 0
 PULSE_MIN = 1000
 PULSE_MAX = 2000
 
-DISTANCE_NEAR = 250     # mm
+DISTANCE_NEAR = 300     # mm
+DISTANCE_NEAR2 = 100     # mm
 #
 pi = None
 Cur_Pulse = [0, 0]
@@ -38,6 +39,8 @@ Pulse_Left = [Pulse_Stop[0] - 45, Pulse_Stop[1]  - 45]
 Pulse_Right = [Pulse_Stop[0] + 60, Pulse_Stop[1]  + 50]
 
 Move_Stat = None
+Last_Turn = None
+STOP_WAIT_SEC = 1.0
 
 Tof = None
 Tof_Timing = None
@@ -45,6 +48,47 @@ Tof_Timing = None
 InChar = ''
 
 #####
+def near2_backward():
+    global Last_Turn
+
+    go_backward(0.4)
+    if Last_Turn == 'left':
+        turn_left(0.2)
+    else:
+        turn_right(0.2)
+    stop_move(STOP_WAIT_SEC)
+
+
+def go_forward(t1):
+    global Cur_Pulse
+
+    set_forward()
+    mtr(Cur_Pulse, t1)
+
+def go_backward(t1):
+    global Cur_Pulse
+
+    set_backward()
+    mtr(Cur_Pulse, t1)
+
+def turn_left(t1):
+    global Cur_Pulse
+
+    set_left()
+    mtr(Cur_Pulse, t1)
+
+def turn_right(t1):
+    global Cur_Pulse
+
+    set_right()
+    mtr(Cur_Pulse, t1)
+
+def stop_move(t1):
+    global Cur_Pulse
+
+    set_stop()
+    mtr(Cur_Pulse, t1)
+
 def set_stop():
     global Cur_Pulse
     global Pulse_Stop
@@ -66,19 +110,24 @@ def set_backward():
 def set_left():
     global Cur_Pulse
     global Pulse_Left
+    global Last_Turn
 
     Cur_Pulse = Pulse_Left
+    Last_Turn = 'left'
 
 def set_right():
     global Cur_Pulse
     global Pulse_Right
+    global Last_Turn
 
     Cur_Pulse = Pulse_Right
-
+    Last_Turn = 'right'
 #
-def mtr(pulse):
+def mtr(pulse, t1):
     mtr1(PIN_LEFT, pulse[0])
     mtr1(PIN_RIGHT, pulse[1])
+    if t1 > 0:
+        time.sleep(t1)
 
 def mtr1(pin, pulse_width):
     global pi
@@ -150,48 +199,59 @@ def auto_mode():
     global Tof
     global Tof_Timing
     global InChar
+    global Last_Turn
 
     stat_move = None
 
-    last_turn = None
+    Last_Turn = None
     sleep_unit = 0.5
     SLEEP_COUNT_MAX = 7
+    forward_count = 0
+    FORWARD_COUNT_MAX = 15
 
     sleep_count = 1
     while True:
         distance = Tof.get_distance()
         print("distance = %d cm" % (distance/10))
 
-        if distance > DISTANCE_NEAR:
+        if distance > DISTANCE_NEAR and forward_count < FORWARD_COUNT_MAX:
             stat_move = 'forward'
-            set_forward()
+            go_forward(0)
             sleep_count = 1
+            forward_count += 1
 
         else:
-            if last_turn != 'left':
-                set_left()
-                last_turn = 'left'
-            else:
-                set_right()
-                last_turn = 'right'
+            forward_count = 0
 
-            mtr(Cur_Pulse)
+            if distance < DISTANCE_NEAR2:
+                print("!!")
+                near2_backward()
+
+            print('Last_Turn =', Last_Turn)
+            if Last_Turn == 'left':
+                turn_right(0)
+            else:
+                turn_left(0)
+
             for i in range(sleep_count):
                 time.sleep(sleep_unit)
-
-                set_stop()
-                mtr(Cur_Pulse)
+                stop_move(STOP_WAIT_SEC)
                 time.sleep(Tof_Timing/1000000.00)
 
                 distance = Tof.get_distance()
                 print("i=%d " % i, "distance = %d cm" % (distance/10))
                 if distance > DISTANCE_NEAR:
                     break
-                if last_turn == 'left':
-                    set_left()
+
+                if distance < DISTANCE_NEAR2:
+                    print("!!")
+                    near2_backward()
+
+                print('Last_Turn =', Last_Turn)
+                if Last_Turn == 'left':
+                    turn_left(0)
                 else:
-                    set_right()
-                mtr(Cur_Pulse)
+                    turn_right(0)
 
             sleep_count += 1
             if sleep_count > SLEEP_COUNT_MAX:
@@ -199,10 +259,8 @@ def auto_mode():
 
             set_stop()
 
-        mtr(Cur_Pulse)
-
         if InChar != '':
-            InChar = ''
+            #InChar = ''
             break
 
         time.sleep(Tof_Timing/1000000.00)
@@ -255,6 +313,7 @@ def main():
 
     Cur_Pulse = Pulse_Stop
     stat_move = None
+    stop_move(0)
 
     # Ready
     print('Ready')
@@ -265,10 +324,6 @@ def main():
         if distance > 0:
             print("distance = %d cm" % (distance/10))
 
-        mtr(Cur_Pulse)
-
-    #    ch = readchar.readkey()
-    #    print(ch)
         ch = InChar
         InChar = ''
 
@@ -277,57 +332,63 @@ def main():
 
         if ch == 'w':
             stat_move = 'foward'
-            set_forward()
+            go_forward(0)
 
         if ch == 'x':
             stat_move = 'backward'
-            set_backward()
+            go_backward(0)
 
         if ch == 'a':
             stat_move = 'left'
-            set_left()
+            turn_left(0)
 
         if ch == 'd':
             stat_move = 'right'
-            set_right()
+            turn_right(0)
 
         if ch == 'q':
             Cur_Pulse[0] += 5
             if Cur_Pulse[0] > PULSE_MAX:
                 Cur_Pulse[0] = PULSE_MAX
             update_pulse(stat_move)
+            mtr(Cur_Pulse, 0)
 
         if ch == 'z':
             Cur_Pulse[0] -= 5
             if Cur_Pulse[0] < PULSE_MIN:
                 Cur_Pulse[0] = PULSE_MIN
             update_pulse(stat_move)
+            mtr(Cur_Pulse, 0)
 
         if ch == 'e':
             Cur_Pulse[1] -= 5
             if Cur_Pulse[1] < PULSE_MIN:
                 Cur_Pulse[1] = PULSE_MIN
             update_pulse(stat_move)
+            mtr(Cur_Pulse, 0)
 
         if ch == 'c':
             Cur_Pulse[1] += 5
             if Cur_Pulse[1] > PULSE_MAX:
                 Cur_Pulse[1] = PULSE_MAX
             update_pulse(stat_move)
+            mtr(Cur_Pulse, 0)
 
         if ch == 's':
             stat_move = None
-            Cur_Pulse = Pulse_Stop
+            stop_move(0)
 
         if ch == ' ':
+            time.sleep(0.5)
             t.join()
             break
 
         if ch != '' and ord(ch) < 0x20:
+            time.sleep(0.5)
             t.join()
             break
 
-    mtr(Pulse_Off)
+    mtr(Pulse_Off, 0)
 
 
 if __name__ == "__main__":
@@ -336,8 +397,8 @@ if __name__ == "__main__":
         main()
     finally:
         print('stop!')
-        mtr(Pulse_Stop)
-        mtr(Pulse_Off)
+        mtr(Pulse_Stop, 0)
+        mtr(Pulse_Off, 0)
         Tof.stop_ranging()
         pi.stop()
         conf_save()
