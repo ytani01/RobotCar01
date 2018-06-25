@@ -16,8 +16,8 @@ print('CONF_FILE='+CONF_FILE)
 
 MY_PORT = 12340
 
-PIN_LEFT = 13
-PIN_RIGHT = 12
+PIN_LEFT = 12
+PIN_RIGHT = 13
 
 PULSE_OFF = 0
 PULSE_MIN = 1000
@@ -235,8 +235,8 @@ def main():
 
     # init
     pi = pigpio.pi()
-    pi.set_mode(17, pigpio.OUTPUT)
-    pi.write(17, 1)
+#    pi.set_mode(17, pigpio.OUTPUT)
+#    pi.write(17, 1)
     pi.set_mode(PIN_LEFT, pigpio.OUTPUT)
     pi.set_mode(PIN_RIGHT, pigpio.OUTPUT)
 
@@ -319,7 +319,7 @@ def main():
             stat_move = None
             Cur_Pulse = Pulse_Stop
 
-        if ch in ' ':
+        if ch == ' ':
             t.join()
             break
 
@@ -336,6 +336,7 @@ if __name__ == "__main__":
         main()
     finally:
         print('stop!')
+        mtr(Pulse_Stop)
         mtr(Pulse_Off)
         Tof.stop_ranging()
         pi.stop()
