@@ -242,7 +242,7 @@ def main():
 
 
     Tof = VL53L0X.VL53L0X()
-    Tof.start_ranging(VL53L0X.VL53L0X_BEST_ACCURACY_MODE)
+    #Tof.start_ranging(VL53L0X.VL53L0X_BEST_ACCURACY_MODE)
     Tof.start_ranging(VL53L0X.VL53L0X_BETTER_ACCURACY_MODE)
     Tof_Timing = Tof.get_timing()
     if Tof_Timing < 20000:
@@ -319,7 +319,7 @@ def main():
             stat_move = None
             Cur_Pulse = Pulse_Stop
 
-        if ch == ' ':
+        if ch in ' ':
             t.join()
             break
 
