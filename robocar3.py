@@ -40,6 +40,7 @@ Pulse_Right = [Pulse_Stop[0] + 60, Pulse_Stop[1]  + 50]
 
 Move_Stat = None
 Last_Turn = None
+#STOP_WAIT_SEC = 0.1
 STOP_WAIT_SEC = 1.0
 
 Tof = None
@@ -207,7 +208,7 @@ def auto_mode():
     sleep_unit = 0.5
     SLEEP_COUNT_MAX = 7
     forward_count = 0
-    FORWARD_COUNT_MAX = 15
+    FORWARD_COUNT_MAX = 20
 
     sleep_count = 1
     while True:
@@ -276,6 +277,8 @@ def charReader():
         InChar = readchar.readchar()
         print('InChar =', InChar, ord(InChar))
 
+        if len(InChar) == 0:
+            break
         if ord(InChar) <= 0x20:
             break
 
