@@ -10,7 +10,7 @@ import time
 
 #####
 class RobotCar:
-    CONF_FILENAME = 'robot_car.conf'
+    CONF_FILENAME = 'robot_car.ini'
     DEF_CONF_FILE = os.environ['HOME']+'/'+CONF_FILENAME
 
     DEF_PULSE = { \
