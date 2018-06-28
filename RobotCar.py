@@ -114,9 +114,9 @@ def main():
     robot.move('backward', 0.1)
     robot.move('stop', 1)
     robot.increment_pulse_val('stop', 0, -10)
-    robot.move('left', 0.1)
+    robot.move('left', 0.5)
     robot.move('stop', 1)
-    robot.move('right', 0.1)
+    robot.move('right', 1)
     robot.move('stop', 1)
     robot.move('off')
 
